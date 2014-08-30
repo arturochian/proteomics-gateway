@@ -1,5 +1,4 @@
 # ui.R
-library(shiny)
 require(rCharts)
 
 shinyUI(fluidPage(
