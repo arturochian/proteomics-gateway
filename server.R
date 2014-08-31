@@ -4,9 +4,14 @@ source("./R/projects.df.R")
 
 shinyServer(function(input, output) {
     
-    output$searchResultsChart <- renderChart({
+    searchResults <- reactive({
+        projects <- search_projects(input$q, input$numResults)
+        return(projects)
+    })
+
+    aggregateProjects <- function(projects) {
         projects <- reduceColumnValues(
-            search_projects(input$q, input$numResults),
+            projects,
             input$x,
             'numAssays',
             5,
@@ -15,7 +20,27 @@ shinyServer(function(input, output) {
         projects <- reduceColumnValues(projects, input$group.var, 'numAssays', 5, paste('other', input$group.var))
         ag.projects <- aggregate(projects[,'numAssays'] ~ projects[,input$x] + projects[,input$group.var], data = projects, sum)
         names(ag.projects) <- c(input$x, input$group.var, "numAssays")
-        if (nrow(projects)>0) {
+        
+        ag.projects
+    }
+    
+    reduceColumnValues <- function(df, reduce.column.name, count.column.name, max.values, reduce.to) {
+        # get top values
+        agg.df <- aggregate(df[,count.column.name] ~ df[,reduce.column.name],data=df,sum)
+        names(agg.df) <- c(reduce.column.name, count.column.name)
+        agg.df <- agg.df[order(agg.df[,count.column.name], decreasing=TRUE),]
+        top.values <- agg.df[1:min(max.values,nrow(agg.df)),reduce.column.name]
+        
+        # reduce data frame
+        df[,reduce.column.name] <- ifelse((df[,reduce.column.name] %in% top.values), as.character(df[,reduce.column.name]), reduce.to)
+        
+        df
+    }
+    
+    output$searchResultsChart <- renderChart({
+        ag.projects <- aggregateProjects(searchResults())
+        
+        if (nrow(ag.projects)>0) {
             resultsPlot <- nPlot(
                 y = 'numAssays', x = input$x,
                 group = input$group.var,
@@ -33,15 +58,4 @@ shinyServer(function(input, output) {
     
 })
 
-reduceColumnValues <- function(df, reduce.column.name, count.column.name, max.values, reduce.to) {
-    # get top values
-    agg.df <- aggregate(df[,count.column.name] ~ df[,reduce.column.name],data=df,sum)
-    names(agg.df) <- c(reduce.column.name, count.column.name)
-    agg.df <- agg.df[order(agg.df[,count.column.name], decreasing=TRUE),]
-    top.values <- agg.df[1:min(max.values,nrow(agg.df)),reduce.column.name]
-        
-    # reduce data frame
-    df[,reduce.column.name] <- ifelse((df[,reduce.column.name] %in% top.values), as.character(df[,reduce.column.name]), reduce.to)
-    
-    df
-}
+
