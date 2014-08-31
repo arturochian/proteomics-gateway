@@ -74,6 +74,7 @@ shinyServer(function(input, output) {
             results.plot$xAxis( axisLabel = input$x )
             results.plot$chart( showControls = F )
             results.plot$chart( reduceXTicks = FALSE )
+            results.plot$xAxis( staggerLabels = TRUE )
             results.plot$addParams( width = '1200' )
             results.plot$addParams( height = '600' )
             results.plot$addParams( dom = 'searchResultsChart' )

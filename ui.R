@@ -3,8 +3,11 @@ require(rCharts)
 
 shinyUI(fluidPage(
     verticalLayout(    
-        titlePanel("The Proteomics Repository Gateway"),
-        showOutput( "searchResultsChart", "nvd3" ),
+        navbarPage(
+            title = "The Proteomics Repository Gateway",
+            tabPanel('Experiments', 
+                     showOutput( "searchResultsChart", "nvd3" )
+             )),
 #         wellPanel(
             fluidRow(
                 column(3,
