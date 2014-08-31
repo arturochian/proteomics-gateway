@@ -71,7 +71,7 @@ shinyServer(function(input, output) {
                 data = ag.projects,
                 type = 'multiBarChart'
             )
-            results.plot$xAxis( axisLabel = input$x )
+#             results.plot$xAxis( axisLabel = input$x )
             results.plot$chart( showControls = F )
             results.plot$chart( reduceXTicks = FALSE )
             results.plot$xAxis( staggerLabels = TRUE )
