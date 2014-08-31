@@ -6,6 +6,8 @@ shinyUI(
         ## Panels
         navbarPage(
             title = "The Proteomics Repository Gateway",
+            inverse = TRUE,
+            collapsable = TRUE,
             tabPanel('Experiments', 
                      showOutput( "searchResultsChart", "nvd3" )
              )
