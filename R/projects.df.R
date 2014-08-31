@@ -9,7 +9,7 @@ pride_archive_url <- "http://www.ebi.ac.uk/pride/ws/archive"
 #' @export
 #' @importFrom rjson fromJSON
 project_count <- function() {
-  projectCount <- fromJSON(file=paste0(pride_archive_url, "/project/count"), method="C")
+  projectCount <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/count")), method="C")
   projectCount                          
 }
 
@@ -22,7 +22,7 @@ project_count <- function() {
 #' @export
 #' @importFrom rjson fromJSON
 project_list <- function(count) {
-  prideJson <- fromJSON(file=paste0(pride_archive_url, "/project/list?show=",count), method="C")
+  prideJson <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/list?show=", count)), method="C")
   prideDataFrame <- fromJsonListToDataFrame(prideJson$list)
   prideDataFrame$numAssays <- as.numeric(prideDataFrame$numAssays)
   prideDataFrame
@@ -37,7 +37,7 @@ project_list <- function(count) {
 #' @export
 #' @importFrom rjson fromJSON
 project <- function(accession) {
-  prideJson <- fromJSON(file=paste0(pride_archive_url, "/project/", accession), method="C")
+  prideJson <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/", accession)), method="C")
   prideDataFrame <- fromJsonToDataFrame(prideJson)
   prideDataFrame$numAssays <- as.numeric(prideDataFrame$numAssays)
   prideDataFrame
@@ -55,7 +55,7 @@ project <- function(accession) {
 #' @export
 #' @importFrom rjson fromJSON
 search_projects <- function(q,count) {
-  prideJson <- fromJSON(file=paste0(pride_archive_url, "/project/list?show=",count,"&q=",q), method="C")
+  prideJson <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/list?show=", count, "&q=", q)), method="C")
   prideDataFrame <- fromJsonListToDataFrame(prideJson$list)
   prideDataFrame$numAssays <- as.numeric(prideDataFrame$numAssays)
   prideDataFrame
