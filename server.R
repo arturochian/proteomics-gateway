@@ -72,10 +72,11 @@ shinyServer(function(input, output) {
                 type = 'multiBarChart'
             )
             results.plot$xAxis( axisLabel = input$x )
-            results.plot$yAxis( axisLabel = "Experiment count" )
-            results.plot$addParams(width = '1200')
-            results.plot$addParams(height = '600')
-            results.plot$addParams(dom = 'searchResultsChart')
+            results.plot$chart( showControls = F )
+            results.plot$chart( reduceXTicks = FALSE )
+            results.plot$addParams( width = '1200' )
+            results.plot$addParams( height = '600' )
+            results.plot$addParams( dom = 'searchResultsChart' )
             return(results.plot)
         }
     })
