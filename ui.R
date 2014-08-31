@@ -1,14 +1,18 @@
 # ui.R
 require(rCharts)
 
-shinyUI(fluidPage(
-    verticalLayout(    
+shinyUI(
+    verticalLayout(  
+        ## Panels
         navbarPage(
             title = "The Proteomics Repository Gateway",
             tabPanel('Experiments', 
                      showOutput( "searchResultsChart", "nvd3" )
-             )),
-#         wellPanel(
+             )
+        ),
+        
+        ##  Controls
+        fluidPage(
             fluidRow(
                 column(3,
                     textInput("q",label=h4("Search"))
@@ -37,8 +41,8 @@ shinyUI(fluidPage(
                               selected = "tissues"),
                     checkboxInput(inputId = "hide.other.group", label = "Ignore Others", value = FALSE)
                 )
-            )
-#         )
-    )
-))
+            ) # fluidRow
+        ) # fluidPage
+    ) # verticalLayout
+) 
 
