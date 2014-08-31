@@ -25,14 +25,14 @@ shinyUI(fluidPage(
                               label = "Choose X",
                               choices = c('species', 'tissues', 'instrumentNames'),
                               selected = "species"),
-                    checkboxInput(inputId = "hide.other.x", label = "Hide Others", value = FALSE)
+                    checkboxInput(inputId = "hide.other.x", label = "Ignore Others", value = FALSE)
                 ),
                 column(3,
                     selectInput(inputId = "group.var",
                               label = "Choose Grouping",
                               choices = c('species', 'tissues', 'instrumentNames'),
                               selected = "tissues"),
-                    checkboxInput(inputId = "hide.other.group", label = "Hide Others", value = FALSE)
+                    checkboxInput(inputId = "hide.other.group", label = "Ignore Others", value = FALSE)
                 )
             )
 #         )
