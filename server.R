@@ -30,6 +30,7 @@ shinyServer(function(input, output) {
             sum
         )
         names(ag.projects) <- c(input$x, input$group.var, "numAssays")
+        ag.projects$numAssays <- as.integer(ag.projects$numAssays)
         
         ag.projects
     }
@@ -52,12 +53,14 @@ shinyServer(function(input, output) {
         other.group.label = paste('other', input$group.var)
         ag.projects <- aggregateProjects(searchResults(), other.x.label, other.group.label)
         
+        # filter out 'others' X if required
         if (input$hide.other.x) {
             ag.projects <- ag.projects[
                 unlist(lapply(ag.projects, function(x) { which(x != other.x.label)})[input$x]),
                 ]
         }
         
+        # filter out 'others' groups if required
         if (input$hide.other.group) {
             ag.projects <- ag.projects[
                 unlist(lapply(ag.projects, function(x) { which(x != other.group.label)})[input$group.var]),
