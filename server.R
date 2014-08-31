@@ -5,20 +5,30 @@ source("./R/projects.df.R")
 shinyServer(function(input, output) {
     
     searchResults <- reactive({
-        projects <- search_projects(input$q, input$numResults)
+        projects <- search_projects(input$q, input$num.results)
         return(projects)
     })
 
-    aggregateProjects <- function(projects) {
+    aggregateProjects <- function(projects, other.x.label, other.group.label) {
         projects <- reduceColumnValues(
             projects,
             input$x,
             'numAssays',
             5,
-            paste('other', input$x)
+            other.x.label
         )
-        projects <- reduceColumnValues(projects, input$group.var, 'numAssays', 5, paste('other', input$group.var))
-        ag.projects <- aggregate(projects[,'numAssays'] ~ projects[,input$x] + projects[,input$group.var], data = projects, sum)
+        projects <- reduceColumnValues(
+            projects, 
+            input$group.var, 
+            'numAssays', 
+            5, 
+            other.group.label
+        )
+        ag.projects <- aggregate(
+            projects[,'numAssays'] ~ projects[,input$x] + projects[,input$group.var], 
+            data = projects, 
+            sum
+        )
         names(ag.projects) <- c(input$x, input$group.var, "numAssays")
         
         ag.projects
@@ -38,21 +48,35 @@ shinyServer(function(input, output) {
     }
     
     output$searchResultsChart <- renderChart({
-        ag.projects <- aggregateProjects(searchResults())
+        other.x.label = paste('others', input$x)
+        other.group.label = paste('other', input$group.var)
+        ag.projects <- aggregateProjects(searchResults(), other.x.label, other.group.label)
+        
+        if (input$hide.other.x) {
+            ag.projects <- ag.projects[
+                unlist(lapply(ag.projects, function(x) { which(x != other.x.label)})[input$x]),
+                ]
+        }
+        
+        if (input$hide.other.group) {
+            ag.projects <- ag.projects[
+                unlist(lapply(ag.projects, function(x) { which(x != other.group.label)})[input$group.var]),
+                ]
+        }
         
         if (nrow(ag.projects)>0) {
-            resultsPlot <- nPlot(
+            results.plot <- nPlot(
                 y = 'numAssays', x = input$x,
                 group = input$group.var,
                 data = ag.projects,
                 type = 'multiBarChart'
             )
-            resultsPlot$xAxis( axisLabel = input$x )
-            resultsPlot$yAxis( axisLabel = "Assay count" )
-            resultsPlot$addParams(width = '1200')
-            resultsPlot$addParams(height = '600')
-            resultsPlot$addParams(dom = 'searchResultsChart')
-            return(resultsPlot)
+            results.plot$xAxis( axisLabel = input$x )
+            results.plot$yAxis( axisLabel = "Experiment count" )
+            results.plot$addParams(width = '1200')
+            results.plot$addParams(height = '600')
+            results.plot$addParams(dom = 'searchResultsChart')
+            return(results.plot)
         }
     })
     

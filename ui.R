@@ -17,20 +17,22 @@ shinyUI(fluidPage(
 #                                       selected = "Assays"),
                           
                 column(3,
-                    sliderInput("numResults", label = h5("Num results"), min = 20, 
+                    sliderInput("num.results", label = h5("Num results"), min = 20, 
                               max = 1000, value = 20)
                 ),
                 column(3,
                     selectInput(inputId = "x",
                               label = "Choose X",
                               choices = c('species', 'tissues', 'instrumentNames'),
-                              selected = "species")
+                              selected = "species"),
+                    checkboxInput(inputId = "hide.other.x", label = "Hide Others", value = FALSE)
                 ),
                 column(3,
                     selectInput(inputId = "group.var",
                               label = "Choose Grouping",
                               choices = c('species', 'tissues', 'instrumentNames'),
-                              selected = "tissues")
+                              selected = "tissues"),
+                    checkboxInput(inputId = "hide.other.group", label = "Hide Others", value = FALSE)
                 )
             )
 #         )
