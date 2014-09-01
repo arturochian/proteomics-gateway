@@ -48,9 +48,9 @@ shinyServer(function(input, output) {
         df
     }
     
-    output$searchResultsChart <- renderChart({
-        other.x.label = paste('others', input$x)
-        other.group.label = paste('other', input$group.var)
+    prepareData <- function() {
+        other.x.label <- paste('others', input$x)
+        other.group.label <- paste('other', input$group.var)
         ag.projects <- aggregateProjects(searchResults(), other.x.label, other.group.label)
         
         # filter out 'others' X if required
@@ -66,6 +66,12 @@ shinyServer(function(input, output) {
                 unlist(lapply(ag.projects, function(x) { which(x != other.group.label)})[input$group.var]),
                 ]
         }
+        
+        ag.projects
+    }
+    
+    output$searchResultsChart <- renderChart({
+        ag.projects <- prepareData()
         
         if (nrow(ag.projects)>0) {
             results.plot <- nPlot(
@@ -84,6 +90,13 @@ shinyServer(function(input, output) {
             return(results.plot)
         }
     })
+
+    output$downloadData <- downloadHandler(
+        filename = function() { paste0(input$x, "-", input$group.var, '.csv') },
+        content = function(file) {
+            write.csv(prepareData(), file)
+        }
+    )
     
 })
 

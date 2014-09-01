@@ -17,7 +17,7 @@ shinyUI(
         fluidPage(
             fluidRow(
                 column(3,
-                    textInput("q",label=h4("Search"))
+                    textInput("q",label=h5("Search"))
                 ),
                           
 #                           selectInput("sizeVar", 
@@ -29,19 +29,23 @@ shinyUI(
                     sliderInput("num.results", label = h5("Num results"), min = 20, 
                               max = 1000, value = 20)
                 ),
-                column(3,
+                column(2,
                     selectInput(inputId = "x",
-                              label = "Choose X",
+                              label = h5("Choose X"),
                               choices = c('species', 'tissues', 'instrumentNames'),
                               selected = "species"),
                     checkboxInput(inputId = "hide.other.x", label = "Ignore Others", value = FALSE)
                 ),
-                column(3,
+                column(2,
                     selectInput(inputId = "group.var",
-                              label = "Choose Grouping",
+                              label = h5("Choose Grouping"),
                               choices = c('species', 'tissues', 'instrumentNames'),
                               selected = "tissues"),
                     checkboxInput(inputId = "hide.other.group", label = "Ignore Others", value = FALSE)
+                ),
+                column(2,
+                       h5("Download results"),
+                       downloadButton('downloadData', 'CSV')
                 )
             ) # fluidRow
         ) # fluidPage
