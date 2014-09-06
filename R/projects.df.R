@@ -1,5 +1,7 @@
 
 pride_archive_url <- "http://www.ebi.ac.uk/pride/ws/archive"
+pride_archive_url_dev <- "http://wwwdev.ebi.ac.uk/pride/ws/archive"
+
 
 #' Returns the number of public projects in PRIDE Archive
 #'
@@ -56,9 +58,14 @@ project <- function(accession) {
 #' @importFrom rjson fromJSON
 search_projects <- function(q,count) {
   prideJson <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/list?show=", count, "&q=", q)), method="C")
-  prideDataFrame <- fromJsonListToDataFrame(prideJson$list)
-  prideDataFrame$numAssays <- as.numeric(prideDataFrame$numAssays)
-  prideDataFrame
+
+  if (length(prideJson$list)>0) {
+      prideDataFrame <- fromJsonListToDataFrame(prideJson$list)
+      prideDataFrame$numAssays <- as.numeric(prideDataFrame$numAssays)
+      prideDataFrame
+  } else {
+      return (data.frame())
+  }
 }
 
 fromJsonListToDataFrame <- function(jsonList) {

@@ -2,7 +2,12 @@ require(rCharts)
 require(rjson)
 source("./R/projects.df.R")
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
+    
+    maxProjects <- reactive({
+        numProjects <- project_count()
+        return(numProjects)
+    })
     
     searchResults <- reactive({
         projects <- search_projects(input$q, input$num.results)
@@ -51,44 +56,57 @@ shinyServer(function(input, output) {
     prepareData <- function() {
         other.x.label <- paste('others', input$x)
         other.group.label <- paste('other', input$group.var)
-        ag.projects <- aggregateProjects(searchResults(), other.x.label, other.group.label)
-        
-        # filter out 'others' X if required
-        if (input$hide.other.x) {
-            ag.projects <- ag.projects[
-                unlist(lapply(ag.projects, function(x) { which(x != other.x.label)})[input$x]),
-                ]
+        search.results.df <- searchResults() 
+        if (nrow(search.results.df)>0) {
+            ag.projects <- aggregateProjects(search.results.df, other.x.label, other.group.label)
+            
+            # filter out 'others' X if required
+            if (input$hide.other.x) {
+                ag.projects <- ag.projects[
+                    unlist(lapply(ag.projects, function(x) { which(x != other.x.label)})[input$x]),
+                    ]
+            }
+            
+            # filter out 'others' groups if required
+            if (input$hide.other.group) {
+                ag.projects <- ag.projects[
+                    unlist(lapply(ag.projects, function(x) { which(x != other.group.label)})[input$group.var]),
+                    ]
+            }
+            
+            ag.projects
+        } else {
+            ag.projects <- rbind(data.frame(),
+                                 c( paste("No ",input$x), paste("No",input$group.var),0)
+                            )
+            names(ag.projects) <- c(input$x,input$group.var,"numAssays")
+            return(ag.projects)
         }
-        
-        # filter out 'others' groups if required
-        if (input$hide.other.group) {
-            ag.projects <- ag.projects[
-                unlist(lapply(ag.projects, function(x) { which(x != other.group.label)})[input$group.var]),
-                ]
-        }
-        
-        ag.projects
     }
+    
+    output$num.results.slider <- renderUI({
+        sliderInput("num.results", label=h5("Num results"), min=10, max = maxProjects(), value=20)
+    })
+    
     
     output$searchResultsChart <- renderChart({
         ag.projects <- prepareData()
-        
-        if (nrow(ag.projects)>0) {
-            results.plot <- nPlot(
-                y = 'numAssays', x = input$x,
-                group = input$group.var,
-                data = ag.projects,
-                type = 'multiBarChart'
-            )
+
+        results.plot <- nPlot(
+            y = 'numAssays', x = input$x,
+            group = input$group.var,
+            data = ag.projects,
+            type = 'multiBarChart'
+        )
 #             results.plot$xAxis( axisLabel = input$x )
-            results.plot$chart( showControls = F )
-            results.plot$chart( reduceXTicks = FALSE )
-            results.plot$xAxis( staggerLabels = TRUE )
-            results.plot$addParams( width = '1200' )
-            results.plot$addParams( height = '600' )
-            results.plot$addParams( dom = 'searchResultsChart' )
-            return(results.plot)
-        }
+        results.plot$chart( showControls = F )
+        results.plot$chart( reduceXTicks = FALSE )
+        results.plot$xAxis( staggerLabels = TRUE )
+        results.plot$addParams( width = '1200' )
+        results.plot$addParams( height = '600' )
+        results.plot$addParams( dom = 'searchResultsChart' )
+        return(results.plot)
+       
     })
 
     output$downloadData <- downloadHandler(
@@ -97,6 +115,7 @@ shinyServer(function(input, output) {
             write.csv(prepareData(), file)
         }
     )
+
     
 })
 

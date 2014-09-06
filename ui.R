@@ -26,8 +26,9 @@ shinyUI(
 #                                       selected = "Assays"),
                           
                 column(3,
-                    sliderInput("num.results", label = h5("Num results"), min = 20, 
-                              max = 1000, value = 20)
+#                     sliderInput("num.results", label = h5("Num results"), min = 20, 
+#                               max = 1000, value = 20),
+                    uiOutput("num.results.slider")
                 ),
                 column(2,
                     selectInput(inputId = "x",
