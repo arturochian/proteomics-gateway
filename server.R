@@ -1,7 +1,8 @@
 require(rCharts)
 source("./R/projects.df.R")
 source("./R/proteins.df.R")
-source("./ui/ui.control.bar.R")
+source("./ui/ui.experimental.stats.R")
+source("./ui/ui.dataset.info.R")
 
 shinyServer(function(input, output, session) {
     
@@ -10,6 +11,10 @@ shinyServer(function(input, output, session) {
         return(numProjects)
     })
     
+    getDatasetAccessions <- reactive({
+        dataset <- project_list(maxProjects())
+        return(sort(as.character(dataset$accession)))
+    })
     searchResults <- reactive({
         projects <- search_projects(input$q, input$num.datasets)
         return(projects)
@@ -85,87 +90,28 @@ shinyServer(function(input, output, session) {
         }
     }
     
-    prepareProteinData <- function() {
-        other.x.label <- paste('others', input$x)
-        other.group.label <- paste('other', input$group.var)
-        search.results.df <- searchResults() 
-        if (nrow(search.results.df)>0) {
-            # Merge with protein counts
-            search.results.df$protein.count <- sapply(search.results.df$accession, function(x) { protein_count(x)})
-            # aggregate
-            ag.projects <- aggregateProjects(search.results.df, other.x.label, other.group.label, "protein.count")
-            # filter out 'others' X if required
-            if (input$hide.other.x) {
-                ag.projects <- ag.projects[
-                    unlist(lapply(ag.projects, function(x) { which(x != other.x.label)})[input$x]),
-                    ]
+    prepareDatasetProteinData <- function() {
+        if (length(input$dataset.selected)>0) {
+            dataset.proteins.df <- protein_list(input$dataset.selected, 1000)
+            if (nrow(dataset.proteins.df)>0) {
+                # count
+                dataset.df <- data.frame(table(dataset.proteins.df$accession))
+                names(dataset.df) <- c("protein.accession","frequency")
+                # filter out if required
+                dataset.df <- dataset.df[order(dataset.df$frequency, decreasing=TRUE),]
+                return(dataset.df[c(1:input$max.proteins.to.show),])
             }
-            
-            # filter out 'others' groups if required
-            if (input$hide.other.group) {
-                ag.projects <- ag.projects[
-                    unlist(lapply(ag.projects, function(x) { which(x != other.group.label)})[input$group.var]),
-                    ]
-            }
-            ag.projects
-        } else {
-            ag.projects <- rbind(data.frame(),
-                                 c( paste("No ",input$x), paste("No",input$group.var),0)
-            )
-            names(ag.projects) <- c(input$x,input$group.var,"peptide.count")
-            return(ag.projects)
         }
+            
+        return(data.frame())
+        
     }
     
-    ##  Experiments controls
-    getControlPanel <- reactive({
-        controlBar(input, maxProjects())
-    })
     
-    output$control.panel <- renderUI({
-        getControlPanel()
+    ##  Experiments UI elements
+    getControlBarExperiments <- reactive({
+        controlBarExperiments(input, maxProjects())
     })
-    
-    output$experimentCountChart <- renderChart({
-        ag.projects <- prepareExperimentData()
-
-        results.plot <- nPlot(
-            y = 'numAssays', x = input$x,
-            group = input$group.var,
-            data = ag.projects,
-            type = 'multiBarChart'
-        )
-#             results.plot$xAxis( axisLabel = input$x )
-        results.plot$chart( showControls = F )
-        results.plot$chart( reduceXTicks = FALSE )
-        results.plot$xAxis( staggerLabels = TRUE )
-        results.plot$addParams( width = '1200' )
-        results.plot$addParams( height = '600' )
-        results.plot$addParams( dom = 'experimentCountChart' )
-        return(results.plot)
-       
-    })
-
-    output$proteinCountChart <- renderChart({
-        ag.projects <- prepareProteinData()
-        
-        results.plot <- nPlot(
-            y = 'protein.count', x = input$x,
-            group = input$group.var,
-            data = ag.projects,
-            type = 'multiBarChart'
-        )
-        #             results.plot$xAxis( axisLabel = input$x )
-        results.plot$chart( showControls = F )
-        results.plot$chart( reduceXTicks = FALSE )
-        results.plot$xAxis( staggerLabels = TRUE )
-        results.plot$addParams( width = '1200' )
-        results.plot$addParams( height = '600' )
-        results.plot$addParams( dom = 'proteinCountChart' )
-        return(results.plot)
-        
-    })
-
     output$downloadExperimentData <- downloadHandler(
         filename = function() { paste0(input$x, "-", input$group.var, '.csv') },
         content = function(file) {
@@ -173,13 +119,43 @@ shinyServer(function(input, output, session) {
         }
     )
 
-    output$downloadProteinData <- downloadHandler(
-        filename = function() { paste0(input$x, "-", input$group.var, '.csv') },
+
+    ##  Proteins UI elements
+    getControlBarDataset <- reactive({
+        controlBarDataset(input, getDatasetAccessions())
+    })
+
+    output$downloadDatasetData <- downloadHandler(
+        filename = function() { paste0(input$dataset.selected, '.csv') },
         content = function(file) {
-            write.csv(prepareExperimentData(), file)
-    }
+            write.csv(prepareDatasetData(), file)
+        }
+    )
     
-)
+    ##  Abstract factory implementation
+    output$control.bar <- renderUI({
+        if (input$mainNavbar=='Experiments') {
+            getControlBarExperiments()
+        } else if (input$mainNavbar=='Dataset') {
+            getControlBarDataset()
+        }
+    })
+    output$resultsChart <- renderChart({
+        if (input$mainNavbar=='Experiments') {
+            ag.projects <- prepareExperimentData() 
+            resultsPlotExperiments( input$x, 'numAssays', input$group.var, ag.projects ) 
+        } else if (input$mainNavbar=='Dataset') {
+            dataset.proteins.df <- prepareDatasetProteinData() 
+            dataset.df <- project(input$dataset.selected)
+            resultsPlotDataset( 'protein.accession', 'frequency', dataset.df, dataset.proteins.df ) 
+        }
+    })
+    output$info <- renderPrint({ 
+        if (input$mainNavbar=='Dataset') {
+            dataset.df <- project(input$dataset.selected)
+            info( dataset.df ) 
+        }
+    })
 
     
 })

@@ -1,4 +1,4 @@
-controlBar <- function(input, max.projects) {
+controlBarExperiments <- function(input, max.projects) {
     fluidRow(
         column(3, textInput("q", label=h5("Search"), value=input$q)  ),
         column(3, sliderInput("num.datasets", label=h5("Num datasets"), min=10, max = max.projects, value=max(10,input$num.datasets)) ),
@@ -21,4 +21,21 @@ controlBar <- function(input, max.projects) {
                downloadButton('downloadExperimentData', 'CSV')
         )
     ) # fluidRow
+}
+
+resultsPlotExperiments <- function(x, y, group.by, data) {
+    results.plot <- nPlot(
+        y = y, x = x,
+        group = group.by,
+        data = data,
+        type = 'multiBarChart'
+    )
+    #             results.plot$xAxis( axisLabel = input$x )
+    results.plot$chart( showControls = F )
+    results.plot$chart( reduceXTicks = FALSE )
+    results.plot$xAxis( staggerLabels = TRUE )
+    results.plot$addParams( width = '1200' )
+    results.plot$addParams( height = '600' )
+    results.plot$addParams( dom = 'resultsChart' )
+    return(results.plot)
 }
