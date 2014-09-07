@@ -1,5 +1,6 @@
 require(rCharts)
 source("./R/projects.df.R")
+source("./R/proteins.df.R")
 source("./ui/ui.control.bar.R")
 
 shinyServer(function(input, output, session) {
@@ -14,28 +15,28 @@ shinyServer(function(input, output, session) {
         return(projects)
     })
 
-    aggregateProjects <- function(projects, other.x.label, other.group.label) {
+    aggregateProjects <- function(projects, other.x.label, other.group.label, on.field) {
         projects <- reduceColumnValues(
             projects,
             input$x,
-            'numAssays',
+            on.field,
             5,
             other.x.label
         )
         projects <- reduceColumnValues(
             projects, 
             input$group.var, 
-            'numAssays', 
+            on.field, 
             5, 
             other.group.label
         )
         ag.projects <- aggregate(
-            projects[,'numAssays'] ~ projects[,input$x] + projects[,input$group.var], 
+            projects[,on.field] ~ projects[,input$x] + projects[,input$group.var], 
             data = projects, 
             sum
         )
-        names(ag.projects) <- c(input$x, input$group.var, "numAssays")
-        ag.projects$numAssays <- as.integer(ag.projects$numAssays)
+        names(ag.projects) <- c(input$x, input$group.var, on.field)
+        ag.projects[,on.field] <- as.integer(ag.projects[,on.field])
         
         ag.projects
     }
@@ -58,7 +59,7 @@ shinyServer(function(input, output, session) {
         other.group.label <- paste('other', input$group.var)
         search.results.df <- searchResults() 
         if (nrow(search.results.df)>0) {
-            ag.projects <- aggregateProjects(search.results.df, other.x.label, other.group.label)
+            ag.projects <- aggregateProjects(search.results.df, other.x.label, other.group.label,"numAssays")
             
             # filter out 'others' X if required
             if (input$hide.other.x) {
@@ -80,6 +81,38 @@ shinyServer(function(input, output, session) {
                                  c( paste("No ",input$x), paste("No",input$group.var),0)
                             )
             names(ag.projects) <- c(input$x,input$group.var,"numAssays")
+            return(ag.projects)
+        }
+    }
+    
+    prepareProteinData <- function() {
+        other.x.label <- paste('others', input$x)
+        other.group.label <- paste('other', input$group.var)
+        search.results.df <- searchResults() 
+        if (nrow(search.results.df)>0) {
+            # Merge with protein counts
+            search.results.df$protein.count <- sapply(search.results.df$accession, function(x) { protein_count(x)})
+            # aggregate
+            ag.projects <- aggregateProjects(search.results.df, other.x.label, other.group.label, "protein.count")
+            # filter out 'others' X if required
+            if (input$hide.other.x) {
+                ag.projects <- ag.projects[
+                    unlist(lapply(ag.projects, function(x) { which(x != other.x.label)})[input$x]),
+                    ]
+            }
+            
+            # filter out 'others' groups if required
+            if (input$hide.other.group) {
+                ag.projects <- ag.projects[
+                    unlist(lapply(ag.projects, function(x) { which(x != other.group.label)})[input$group.var]),
+                    ]
+            }
+            ag.projects
+        } else {
+            ag.projects <- rbind(data.frame(),
+                                 c( paste("No ",input$x), paste("No",input$group.var),0)
+            )
+            names(ag.projects) <- c(input$x,input$group.var,"peptide.count")
             return(ag.projects)
         }
     }
@@ -114,10 +147,10 @@ shinyServer(function(input, output, session) {
     })
 
     output$proteinCountChart <- renderChart({
-        ag.projects <- prepareExperimentData()
+        ag.projects <- prepareProteinData()
         
         results.plot <- nPlot(
-            y = 'numAssays', x = input$x,
+            y = 'protein.count', x = input$x,
             group = input$group.var,
             data = ag.projects,
             type = 'multiBarChart'

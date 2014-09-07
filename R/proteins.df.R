@@ -12,7 +12,7 @@ pride_archive_url_dev <- "http://wwwdev.ebi.ac.uk/pride/ws/archive"
 #' @details TODO
 #' @export
 #' @importFrom rjson fromJSON
-protein_count <- function(project.accession) {
+protein_count <- function(project.accession) {    
   protein.count <- fromJSON(file=URLencode(paste0(pride_archive_url_dev, "/protein/count/project/", project.accession)), method="C")
   protein.count                          
 }
