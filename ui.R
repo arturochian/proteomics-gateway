@@ -10,33 +10,14 @@ shinyUI(
             collapsable = TRUE,
             tabPanel('Experiments', 
                  ## Main view
-                 showOutput( "searchResultsChart", "nvd3" ),
+                 showOutput( "experimentCountChart", "nvd3" )
                  ##  Controls
-                 fluidPage(
-                     fluidRow(
-                         column(3, textInput("q",label=h5("Search")) ),
-                         column(3, uiOutput("num.results.slider") ),
-                         column(2,
-                                selectInput(inputId = "x",
-                                            label = h5("Choose X"),
-                                            choices = c('species', 'tissues', 'instrumentNames'),
-                                            selected = "species"),
-                                checkboxInput(inputId = "hide.other.x", label = "Ignore Others", value = FALSE)
-                         ),
-                         column(2,
-                                selectInput(inputId = "group.var",
-                                            label = h5("Choose Grouping"),
-                                            choices = c('species', 'tissues', 'instrumentNames'),
-                                            selected = "tissues"),
-                                checkboxInput(inputId = "hide.other.group", label = "Ignore Others", value = FALSE)
-                         ),
-                         column(2,
-                                h5("Download results"),
-                                downloadButton('downloadData', 'CSV')
-                         )
-                     ) # fluidRow
-                 ) # fluidPage 
+                 
              ), # Experiments tab
+            tabPanel('Proteins',
+                 ## Main view
+                 showOutput( "proteinCountChart", "nvd3" )
+            ), # Protein tab
             tabPanel('About', 
                  ## Main view
                  h4("About the Proteomics Gateway"),
@@ -46,10 +27,16 @@ shinyUI(
                    "),
                  p("
                     Please, feel free to play around with the different controls in each of the views. Remember that you can 
-                   always export your results in CSV format for later use!")
+                   always export your results in CSV format for later use!"),
+                 h5("The Experiments view"),
+                 p("Here you can group experiment search results by two different metadata variables."),
+                 h5("The Proteins view"),
+                 p("Comming soon!")
             ) # About tab
-        )
-        
+        ),
+        fluidPage(
+            uiOutput("control.panel")
+        ) # fluidPage 
         
     ) # verticalLayout
 ) 

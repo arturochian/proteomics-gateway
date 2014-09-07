@@ -1,4 +1,5 @@
-
+library(rjson)
+source("./R/json.utils.R")
 pride_archive_url <- "http://www.ebi.ac.uk/pride/ws/archive"
 pride_archive_url_dev <- "http://wwwdev.ebi.ac.uk/pride/ws/archive"
 
@@ -11,8 +12,8 @@ pride_archive_url_dev <- "http://wwwdev.ebi.ac.uk/pride/ws/archive"
 #' @export
 #' @importFrom rjson fromJSON
 project_count <- function() {
-  projectCount <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/count")), method="C")
-  projectCount                          
+  project.count <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/count")), method="C")
+  project.count                          
 }
 
 #' Retrieves the list of projects in PRIDE Archive
@@ -24,10 +25,10 @@ project_count <- function() {
 #' @export
 #' @importFrom rjson fromJSON
 project_list <- function(count) {
-  prideJson <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/list?show=", count)), method="C")
-  prideDataFrame <- fromJsonListToDataFrame(prideJson$list)
-  prideDataFrame$numAssays <- as.numeric(prideDataFrame$numAssays)
-  prideDataFrame
+  pride.json <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/list?show=", count)), method="C")
+  pride.df <- fromJsonListToDataFrame(pride.json$list)
+  pride.df$numAssays <- as.numeric(pride.df$numAssays)
+  pride.df
 }
 
 #' Returns a PRIDE Archive project
@@ -39,10 +40,10 @@ project_list <- function(count) {
 #' @export
 #' @importFrom rjson fromJSON
 project <- function(accession) {
-  prideJson <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/", accession)), method="C")
-  prideDataFrame <- fromJsonToDataFrame(prideJson)
-  prideDataFrame$numAssays <- as.numeric(prideDataFrame$numAssays)
-  prideDataFrame
+  pride.json <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/", accession)), method="C")
+  pride.df <- fromJsonToDataFrame(pride.json)
+  pride.df$numAssays <- as.numeric(pride.df$numAssays)
+  pride.df
 }
 
 #' Returns a series of PRIDE Archive projects
@@ -57,30 +58,13 @@ project <- function(accession) {
 #' @export
 #' @importFrom rjson fromJSON
 search_projects <- function(q,count) {
-  prideJson <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/list?show=", count, "&q=", q)), method="C")
+  pride.json <- fromJSON(file=URLencode(paste0(pride_archive_url, "/project/list?show=", count, "&q=", q)), method="C")
 
-  if (length(prideJson$list)>0) {
-      prideDataFrame <- fromJsonListToDataFrame(prideJson$list)
-      prideDataFrame$numAssays <- as.numeric(prideDataFrame$numAssays)
-      prideDataFrame
+  if (length(pride.json$list)>0) {
+      pride.df <- fromJsonListToDataFrame(pride.json$list)
+      pride.df$numAssays <- as.numeric(pride.df$numAssays)
+      pride.df
   } else {
       return (data.frame())
   }
-}
-
-fromJsonListToDataFrame <- function(jsonList) {
-  cleanJsonList <- lapply(jsonList, function(x) {
-    x[sapply(x, is.null)] <- NA # clean null values
-    x[sapply(x,length)==0] <- NA # clean empty lists
-    x[sapply(x,length)>1] <- sapply(x[sapply(x,length)>1], function(y) {paste(y,collapse=" || ")}) # clean multivalued lists
-    unlist(x)
-  })
-  dataFrame <- as.data.frame(do.call("rbind", cleanJsonList))
-}
-
-fromJsonToDataFrame <- function(jsonItem) {
-  jsonItem[sapply(jsonItem, is.null)] <- NA # clean null values
-  jsonItem[sapply(jsonItem,length)==0] <- NA # clean empty lists
-  jsonItem[sapply(jsonItem,length)>1] <- sapply(jsonItem[sapply(jsonItem,length)>1], function(y) {paste(y,collapse=" || ")}) # clean multivalued lists
-  dataFrame <- as.data.frame(jsonItem)
 }

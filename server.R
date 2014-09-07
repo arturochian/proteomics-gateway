@@ -1,6 +1,6 @@
 require(rCharts)
-require(rjson)
 source("./R/projects.df.R")
+source("./ui/ui.control.bar.R")
 
 shinyServer(function(input, output, session) {
     
@@ -10,7 +10,7 @@ shinyServer(function(input, output, session) {
     })
     
     searchResults <- reactive({
-        projects <- search_projects(input$q, input$num.results)
+        projects <- search_projects(input$q, input$num.datasets)
         return(projects)
     })
 
@@ -53,7 +53,7 @@ shinyServer(function(input, output, session) {
         df
     }
     
-    prepareData <- function() {
+    prepareExperimentData <- function() {
         other.x.label <- paste('others', input$x)
         other.group.label <- paste('other', input$group.var)
         search.results.df <- searchResults() 
@@ -84,13 +84,17 @@ shinyServer(function(input, output, session) {
         }
     }
     
-    output$num.results.slider <- renderUI({
-        sliderInput("num.results", label=h5("Num results"), min=10, max = maxProjects(), value=20)
+    ##  Experiments controls
+    getControlPanel <- reactive({
+        controlBar(input, maxProjects())
     })
     
+    output$control.panel <- renderUI({
+        getControlPanel()
+    })
     
-    output$searchResultsChart <- renderChart({
-        ag.projects <- prepareData()
+    output$experimentCountChart <- renderChart({
+        ag.projects <- prepareExperimentData()
 
         results.plot <- nPlot(
             y = 'numAssays', x = input$x,
@@ -104,17 +108,45 @@ shinyServer(function(input, output, session) {
         results.plot$xAxis( staggerLabels = TRUE )
         results.plot$addParams( width = '1200' )
         results.plot$addParams( height = '600' )
-        results.plot$addParams( dom = 'searchResultsChart' )
+        results.plot$addParams( dom = 'experimentCountChart' )
         return(results.plot)
        
     })
 
-    output$downloadData <- downloadHandler(
+    output$proteinCountChart <- renderChart({
+        ag.projects <- prepareExperimentData()
+        
+        results.plot <- nPlot(
+            y = 'numAssays', x = input$x,
+            group = input$group.var,
+            data = ag.projects,
+            type = 'multiBarChart'
+        )
+        #             results.plot$xAxis( axisLabel = input$x )
+        results.plot$chart( showControls = F )
+        results.plot$chart( reduceXTicks = FALSE )
+        results.plot$xAxis( staggerLabels = TRUE )
+        results.plot$addParams( width = '1200' )
+        results.plot$addParams( height = '600' )
+        results.plot$addParams( dom = 'proteinCountChart' )
+        return(results.plot)
+        
+    })
+
+    output$downloadExperimentData <- downloadHandler(
         filename = function() { paste0(input$x, "-", input$group.var, '.csv') },
         content = function(file) {
-            write.csv(prepareData(), file)
+            write.csv(prepareExperimentData(), file)
         }
     )
+
+    output$downloadProteinData <- downloadHandler(
+        filename = function() { paste0(input$x, "-", input$group.var, '.csv') },
+        content = function(file) {
+            write.csv(prepareExperimentData(), file)
+    }
+    
+)
 
     
 })
