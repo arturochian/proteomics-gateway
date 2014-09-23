@@ -120,7 +120,7 @@ shinyServer(function(input, output, session) {
     )
 
 
-    ##  Proteins UI elements
+    ##  Dataset UI elements
     getControlBarDataset <- reactive({
         controlBarDataset(input, getDatasetAccessions())
     })
